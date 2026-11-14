@@ -555,3 +555,14 @@
   .builder-bar__progress { gap: 4px; }
   .progress-track { height: 8px; }
 }
+
+/* Phones: keep price + actions inside the sticky bar (was clipping "Order now" at 375px). */
+@media (max-width: 480px) {
+  .builder-bar { grid-template-columns: minmax(0, 1fr) auto; padding-inline: 10px; }
+  .builder-bar__price { min-width: 0; }
+  .price-pill { padding: 4px 4px; }
+  .price-pill strong { font-size: 19px; white-space: nowrap; }
+  .builder-bar__actions { gap: 6px; min-width: 0; }
+  .builder-bar__actions .gloss-btn { padding: 0 12px; font-size: 13px; white-space: nowrap; }
+  .builder-bar__actions .gloss-btn--chrome { padding: 0; width: 46px; justify-content: center; }
+}

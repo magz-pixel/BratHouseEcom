@@ -1,9 +1,10 @@
+import { BUSINESS } from "./business";
 import { wigProducts } from "./catalog";
 import { formatMoney } from "./money";
 
 export type PageSeo = { title: string; description: string; body: string; image?: string; noindex?: boolean; status?: number };
 
-export const BRATHOUSE_OG_IMAGE_URL = "https://files.manuscdn.com/user_upload_by_module/session_file/310519663950849015/PPYALSXkyUTjnXbE.webp";
+export const BRATHOUSE_OG_IMAGE_URL = BUSINESS.ogImageUrl;
 
 export const pageSeo: Record<string, PageSeo> = {
   "/": { title: "BRATHOUSE — Wigs", description: "Ten listed wig styles with bratty Y2K energy, priced in South African rand.", body: "Shop BRATHOUSE wigs, browse exact listed product details, and see each price in South African rand (R). Availability, shipping and payment need confirmation." },

@@ -1,14 +1,35 @@
-# BRATHOUSE — Wigs, Bundles & Installs
+# BRATHOUSE — wigs, built your way
 
-React / Express / tRPC / Drizzle starter, adapted from the Sandbox web-db-user template.
+South African wig storefront with a custom **Build Your Wig** studio. React 19 + Vite + Tailwind on the front end; an Express/tRPC server (from the original Manus starter) is kept for later payments and orders.
 
-- `pnpm dev`: development server; honors `PORT` (default 3000).
-- `pnpm build` / `pnpm start`: build and serve `dist/index.js` and `dist/public/`.
-- `pnpm db:migrate`: apply checked-in migrations. `pnpm db:push`: generate and apply new schema changes.
-- `pnpm check` / `pnpm test`: types and application tests.
+## Run it
 
-Start with the Webdev skill's default-template guide. Platform login, storage, payments and service contracts live in its shared references; read the relevant capability before extending its helper.
+```bash
+pnpm install
+pnpm dev:static   # storefront only, http://localhost:3000
+pnpm dev          # full Express server
+pnpm check        # TypeScript
+pnpm test         # Vitest (pricing model + server)
+pnpm build:static # static site into dist/public
+```
 
-`server/_core/publicConfig.ts` exposes only named public runtime values. Private keys stay server-side. The platform serves managed `/manus-storage/` assets; the application does not register a second proxy.
+No global pnpm? Prefix commands with `npx pnpm@10.18.0`.
 
-Platform configuration is readable and editable through `webdev.config`. Default settings are initial values, not enforced constraints. The agent may modify the files, commands and configuration or follow the flexible guide for another stack.
+Static demo build (works from any folder / file host): `VITE_HASH_ROUTER=1 pnpm exec vite build --base ./`
+
+## Where things live
+
+| What | Where |
+| --- | --- |
+| Pages and routes | `client/src/pages/`, `client/src/App.tsx` |
+| Build Your Wig studio | `client/src/pages/BuildPage.tsx`, `client/src/components/WigRender.tsx` |
+| Pricing model (+ tests) | `shared/wigBuilder.ts`, `shared/wigBuilder.test.ts` |
+| Ready-to-ship catalog | `shared/catalog.ts` |
+| **Launch placeholders** (WhatsApp, domain, socials, share image) | `shared/business.ts` |
+| Plans, pricing data, AI try-on plan | `docs/brathouse/` |
+
+## Ordering
+
+WhatsApp-first until a South African payment gateway is connected. Checkout never takes payment.
+
+CI (`.github/workflows/ci.yml`) runs typecheck, tests and the static build on every push and PR.
