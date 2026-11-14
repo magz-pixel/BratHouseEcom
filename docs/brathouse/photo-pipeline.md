@@ -38,7 +38,7 @@ It also writes `shared/wigMedia.generated.json`, which the site reads through `s
 
 ## Not yet built (next steps)
 
-- Product page gallery (angles, close-ups, videos): the data is already in the manifest.
-- Done: 360° spin viewer (`client/src/components/SpinViewer.tsx`) shows on product pages as a Photo / 360° toggle once a wig has 8+ spin frames.
+- Done: product page gallery (`client/src/components/ProductGallery.tsx`): front photo, 360° spin, every angle and close-up, video clips, thumbnail rail and a full-screen zoom. Wigs without photos keep the drawing.
+- Done: 360° spin viewer (`client/src/components/SpinViewer.tsx`), shown as a gallery item once a wig has 8+ spin frames.
 - Background-removed cut-outs for the try-on: planned for the try-on step.
 - Size: around 1–2 MB of WebP per wig plus videos. If the repo gets heavy, move `client/public/wigs` to a CDN or object storage and point the manifest URLs there.
