@@ -17,6 +17,13 @@ const HRX = 66; // head half-width
 const HRY = 84; // head half-height
 const CHIN = CY + HRY;
 
+/** Head placement in SVG units (viewBox "0 40 400 500"), used to line the hair up on a real face. */
+export const HEAD = { cx: CX, cy: CY, halfWidth: HRX, halfHeight: HRY, chin: CHIN, hairline: 128 } as const;
+export const RENDER_VIEWBOX = { x: 0, y: 40, width: 400, height: 500 } as const;
+
+const HEAD_PATH = `M${CX} ${CY - HRY} C${CX + 46} ${CY - HRY} ${CX + HRX + 2} ${CY - 44} ${CX + HRX} ${CY} C${CX + HRX - 2} ${CY + 44} ${CX + 42} ${CHIN - 2} ${CX} ${CHIN} C${CX - 42} ${CHIN - 2} ${CX - HRX + 2} ${CY + 44} ${CX - HRX} ${CY} C${CX - HRX - 2} ${CY - 44} ${CX - 46} ${CY - HRY} ${CX} ${CY - HRY} Z`;
+const NECK_PATH = "M177 246 C178 292 173 322 160 344 L240 344 C227 322 222 292 223 246 Z";
+
 export const SKINS: Record<SkinId, { base: string; dark: string; light: string; label: string }> = {
   deep: { base: "#5b3420", dark: "#2f190e", light: "#8a5636", label: "Deep" },
   rich: { base: "#7d4a2c", dark: "#4a2914", light: "#b07a52", label: "Rich" },
@@ -180,7 +187,8 @@ function fringePath(c: WigConfig, g: Geo) {
 export type WigRenderProps = {
   config: WigConfig;
   view?: "front" | "back";
-  mode?: "styled" | "cap";
+  /** styled = full model; cap = bare wig cap ("before"); hair = wig only, face cut out, for photo try-on. */
+  mode?: "styled" | "cap" | "hair";
   skin?: SkinId;
   showLace?: boolean;
   className?: string;
@@ -200,7 +208,9 @@ export function WigRender({ config: raw, view = "front", mode = "styled", skin =
   const url = (name: string) => `url(#${id(name)})`;
   const isBob = c.texture === "bob";
   const hairFill = c.color === "highlight" ? url("stripes") : url("hair");
-  const styled = mode === "styled";
+  const hairOnly = mode === "hair";
+  const styled = mode === "styled" || hairOnly;
+  const backMask = hairOnly ? `url(#${id("faceCut")})` : undefined;
   const back = view === "back";
   const isChrome = c.color === "chrome";
   const strandCount = c.texture === "kinky" ? 0 : c.texture === "curly" ? 3 : 5;
@@ -266,26 +276,36 @@ export function WigRender({ config: raw, view = "front", mode = "styled", skin =
           <rect width="6" height="6" fill="#3b2a24" />
           <circle cx="3" cy="3" r="1.1" fill="#58423a" />
         </pattern>
+        {hairOnly && (
+          <mask id={id("faceCut")} maskUnits="userSpaceOnUse" x="0" y="0" width="400" height="600">
+            <rect x="0" y="0" width="400" height="600" fill="#fff" />
+            <path d={HEAD_PATH} fill="#000" />
+            <path d={NECK_PATH} fill="#000" />
+            <rect x="150" y="300" width="100" height="300" fill="#000" />
+          </mask>
+        )}
         <filter id={id("soft")} x="-10%" y="-10%" width="120%" height="120%"><feGaussianBlur stdDeviation="1.4" /></filter>
         <filter id={id("shadow")} x="-20%" y="-20%" width="140%" height="140%"><feDropShadow dx="0" dy="6" stdDeviation="7" floodColor="#3a0a22" floodOpacity="0.28" /></filter>
       </defs>
 
       <g filter={url("shadow")}>
         {/* BACK HAIR */}
-        {styled && <path d={backHairPath(g)} fill={hairFill} />}
-        {styled && <path d={backHairPath(g)} fill={url("sheen")} />}
+        {styled && <path d={backHairPath(g)} fill={hairFill} mask={backMask} />}
+        {styled && <path d={backHairPath(g)} fill={url("sheen")} mask={backMask} />}
 
         {/* BUST */}
-        {!compact && <path d="M60 476 C62 404 104 356 160 342 L240 342 C296 356 338 404 340 476 Z" fill={url("bust")} />}
-        <path d="M177 246 C178 292 173 322 160 344 L240 344 C227 322 222 292 223 246 Z" fill={url("bust")} />
-        <path d="M168 300 C185 318 215 318 232 300" stroke={sk.dark} strokeOpacity="0.35" strokeWidth="3" fill="none" />
+        {!compact && !hairOnly && <path d="M60 476 C62 404 104 356 160 342 L240 342 C296 356 338 404 340 476 Z" fill={url("bust")} />}
+        {!hairOnly && <path d={NECK_PATH} fill={url("bust")} />}
+        {!hairOnly && <path d="M168 300 C185 318 215 318 232 300" stroke={sk.dark} strokeOpacity="0.35" strokeWidth="3" fill="none" />}
 
         {/* HEAD */}
-        <ellipse cx={CX - HRX + 1} cy={196} rx={8} ry={16} fill={sk.base} />
-        <ellipse cx={CX + HRX - 1} cy={196} rx={8} ry={16} fill={sk.base} />
-        <path d={`M${CX} ${CY - HRY} C${CX + 46} ${CY - HRY} ${CX + HRX + 2} ${CY - 44} ${CX + HRX} ${CY} C${CX + HRX - 2} ${CY + 44} ${CX + 42} ${CHIN - 2} ${CX} ${CHIN} C${CX - 42} ${CHIN - 2} ${CX - HRX + 2} ${CY + 44} ${CX - HRX} ${CY} C${CX - HRX - 2} ${CY - 44} ${CX - 46} ${CY - HRY} ${CX} ${CY - HRY} Z`} fill={url("skin")} />
+        {!hairOnly && <>
+          <ellipse cx={CX - HRX + 1} cy={196} rx={8} ry={16} fill={sk.base} />
+          <ellipse cx={CX + HRX - 1} cy={196} rx={8} ry={16} fill={sk.base} />
+          <path d={HEAD_PATH} fill={url("skin")} />
+        </>}
 
-        {!back && (
+        {!back && !hairOnly && (
           <g>
             {/* brows */}
             <path d="M160 168 Q174 160 188 166" stroke="#1a0e0a" strokeWidth="3.2" fill="none" strokeLinecap="round" />

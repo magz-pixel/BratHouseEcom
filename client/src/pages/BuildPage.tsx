@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState, type CSSProperties, type PointerEvent as ReactPointerEvent, type ReactNode } from "react";
-import { ArrowLeft, ArrowRight, Check, ChevronLeft, ChevronRight, Copy, Dices, Download, Info, Lock, Package, RotateCcw, Share2, ShoppingBag, Sparkles, SplitSquareHorizontal, Volume2, VolumeX, X } from "lucide-react";
+import { ArrowLeft, ArrowRight, Camera, Check, ChevronLeft, ChevronRight, Copy, Dices, Download, Info, Lock, Package, RotateCcw, Share2, ShoppingBag, Sparkles, SplitSquareHorizontal, Volume2, VolumeX, X } from "lucide-react";
 import { Link } from "wouter";
 import { formatMoney } from "@shared/money";
 import { BUSINESS, whatsappLink } from "@shared/business";
@@ -10,6 +10,7 @@ import {
 } from "@shared/wigBuilder";
 import { SiteShell } from "@/components/SiteShell";
 import { SkuArt, hasPhotos } from "@/components/LookArt";
+import { TryOn } from "@/components/TryOn";
 import type { WigProduct } from "@shared/catalog";
 import { Pedestal, SKINS, WigRender } from "@/components/WigRender";
 import { useStore } from "@/contexts/StoreContext";
@@ -84,6 +85,7 @@ export default function BuildPage() {
   const [skin, setSkin] = useState<SkinId>("rich");
   const [angle, setAngle] = useState(0);
   const [compare, setCompare] = useState(false);
+  const [tryOn, setTryOn] = useState(false);
   const [split, setSplit] = useState(50);
   const [reaction, setReaction] = useState<{ id: number; text: string } | null>(null);
   const [burst, setBurst] = useState(0);
@@ -205,7 +207,7 @@ export default function BuildPage() {
 
   return (
     <SiteShell hideHelper>
-      <div className="builder" data-rolling={rolling || undefined}>
+      <div className="builder" data-rolling={rolling || undefined} data-tryon={tryOn || undefined}>
         {/* TOP BAR */}
         <header className="builder-top">
           <div className="builder-top__title">
@@ -253,7 +255,7 @@ export default function BuildPage() {
 
           {/* STAGE */}
           <section className="builder-stage" aria-label="Live wig preview">
-            <Stage
+            {tryOn ? <TryOn config={cfg} onClose={() => setTryOn(false)} /> : <Stage
               config={cfg}
               skin={skin}
               angle={angle}
@@ -265,13 +267,14 @@ export default function BuildPage() {
               stageRef={stageSvgRef}
               burst={burst}
               reaction={reaction}
-            />
-            <div className="stage-controls">
+            />}
+            {!tryOn && <><div className="stage-controls">
               <button type="button" className="round-btn" onClick={() => { setAngle((a) => a - 45); sound.pop(); }} aria-label="Rotate left"><ChevronLeft size={18} /></button>
               <span className="stage-controls__hint">{compare ? "Drag the line" : "Drag to spin 360°"}</span>
               <button type="button" className="round-btn" onClick={() => { setAngle((a) => a + 45); sound.pop(); }} aria-label="Rotate right"><ChevronRight size={18} /></button>
             </div>
             <div className="stage-tools">
+              <button type="button" className="tool-chip tool-chip--tryon" onClick={() => { setTryOn(true); setCompare(false); sound.pop(); award("tryon", 15, "tried it on"); }}><Camera size={14} /> <span>Try on me</span></button>
               <button type="button" className={`tool-chip ${compare ? "is-on" : ""}`} onClick={() => { setCompare((v) => !v); setAngle(0); sound.pop(); }} aria-pressed={compare}><SplitSquareHorizontal size={14} /> Before / after</button>
               <div className="skin-picker" role="group" aria-label="Model skin tone">
                 {(Object.keys(SKINS) as SkinId[]).map((id) => (
@@ -280,7 +283,7 @@ export default function BuildPage() {
               </div>
               <button type="button" className="tool-chip tool-chip--icon" onClick={() => setMuted((m) => !m)} aria-label={muted ? "Unmute sounds" : "Mute sounds"} aria-pressed={muted}>{muted ? <VolumeX size={15} /> : <Volume2 size={15} />}</button>
               <button type="button" className="tool-chip tool-chip--icon" onClick={reset} aria-label="Reset look"><RotateCcw size={15} /></button>
-            </div>
+            </div></>}
             <div className={`ship-badge ${sku ? "ship-badge--ready" : ""}`}>
               {sku ? <><Package size={14} /> <b>Ready to ship</b> · in our SA sample drop · <Link href={`/product/${sku.slug}`}>view</Link></> : <><Sparkles size={14} /> <b>Made to order</b> · built on the factory line for you</>}
             </div>
