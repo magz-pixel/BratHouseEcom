@@ -571,3 +571,26 @@
 .wig-photo { display: block; width: 100%; object-fit: cover; object-position: center 30%; background: #ece7e2; }
 .product-gallery__main > .wig-photo.product-detail-art { object-fit: contain; }
 .item-thumb .wig-photo { height: 100%; }
+
+/* ------------------------------ 360° spin viewer ------------------------------ */
+.spin-viewer { position: relative; overflow: hidden; background: #ece7e2; cursor: grab; touch-action: pan-y; user-select: none; -webkit-user-select: none; outline: none; }
+.spin-viewer:active { cursor: grabbing; }
+.spin-viewer:focus-visible { box-shadow: inset 0 0 0 3px var(--b-pink, #ff1493); }
+.spin-viewer img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain; visibility: hidden; pointer-events: none; }
+.spin-viewer img.is-active { visibility: visible; }
+.spin-viewer__loading { position: absolute; inset: auto 0 50% 0; text-align: center; font: 700 12px var(--mono-font, monospace); letter-spacing: 0.08em; text-transform: uppercase; }
+.spin-viewer__hud { position: absolute; left: 12px; right: 12px; bottom: 12px; display: flex; align-items: center; gap: 8px; pointer-events: none; }
+.spin-viewer__badge { padding: 4px 10px; border-radius: 999px; background: var(--b-ink, #0a0a0a); color: #fff; font: 700 12px var(--mono-font, monospace); }
+.spin-viewer__hint { padding: 4px 10px; border-radius: 999px; background: rgba(255, 255, 255, 0.85); font: 700 11px var(--mono-font, monospace); text-transform: uppercase; letter-spacing: 0.06em; }
+.spin-viewer__dial { width: 28px; height: 28px; margin-left: auto; }
+.spin-viewer__dial circle { fill: rgba(255, 255, 255, 0.85); stroke: var(--b-ink, #0a0a0a); stroke-width: 2; }
+.spin-viewer__dial line { stroke: var(--b-pink, #ff1493); stroke-width: 3; stroke-linecap: round; transform-origin: 18px 18px; }
+.view-toggle { position: absolute; top: 14px; right: 14px; z-index: 3; display: flex; padding: 3px; border-radius: 999px; background: #fff; border: 2px solid var(--b-ink, #0a0a0a); box-shadow: 0 3px 0 var(--b-ink, #0a0a0a); }
+.view-toggle button { min-height: 36px; padding: 0 14px; border: 0; border-radius: 999px; background: none; font: 700 12px var(--mono-font, monospace); cursor: pointer; }
+.view-toggle button[aria-pressed="true"] { background: var(--b-pink, #ff1493); color: #fff; }
+.product-gallery__main > .spin-viewer.product-detail-art { height: min(660px, 63vw); }
+.product-gallery__main { position: relative; }
+@media (max-width: 900px) {
+  .product-gallery__main > .spin-viewer.product-detail-art,
+  .product-gallery__main > .wig-photo.product-detail-art { height: auto; aspect-ratio: 4 / 5; max-height: 78vh; }
+}

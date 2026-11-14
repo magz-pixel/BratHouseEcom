@@ -10,6 +10,8 @@ import { usePageMeta } from "@/hooks/usePageMeta";
 import { SkuArt, hasPhotos } from "@/components/LookArt";
 import { encodeConfig, skuToConfig } from "@shared/wigBuilder";
 import { pathWithQuery } from "@/lib/routing";
+import { SpinViewer } from "@/components/SpinViewer";
+import { getWigMedia } from "@shared/wigMedia";
 
 
 export default function ProductPage() {
@@ -23,6 +25,9 @@ export default function ProductPage() {
 function ProductDetails({ product }: { product: (typeof wigProducts)[number] }) {
   const { addItem, wishlist, toggleWishlist } = useStore();
   const [tab, setTab] = useState("details");
+  const media = getWigMedia(product.slug);
+  const canSpin = (media?.spin.length ?? 0) >= 8;
+  const [view, setView] = useState<"photo" | "spin">("photo");
   const saved = wishlist.includes(product.id);
   const variant = [product.grade, `${product.length}\"`, product.lace, product.density ? `${product.density}%` : "", product.glueless ? "Glueless" : ""].filter(Boolean).join(" · ");
   const details: [string, string][] = [
@@ -42,7 +47,10 @@ function ProductDetails({ product }: { product: (typeof wigProducts)[number] }) 
         <div className="product-gallery">
           <div className="product-gallery__main sticker-card">
             <Tape />
-            <SkuArt product={product} className="product-detail-art" sizes="(max-width: 900px) 100vw, 640px" eager />
+            {view === "spin" && media && canSpin
+              ? <SpinViewer frames={media.spin} size={media.spinSize} label={product.name} className="product-detail-art" />
+              : <SkuArt product={product} className="product-detail-art" sizes="(max-width: 900px) 100vw, 640px" eager />}
+            {canSpin && <div className="view-toggle" role="group" aria-label="Product view">{([["photo", "Photo"], ["spin", "360°"]] as const).map(([id, label]) => <button key={id} type="button" aria-pressed={view === id} onClick={() => setView(id)}>{label}</button>)}</div>}
             {!hasPhotos(product) && <p className="ai-image-disclosure ai-image-disclosure--detail">Illustration · real photos of the sample drop coming soon.</p>}
           </div>
         </div>
