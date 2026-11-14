@@ -227,6 +227,52 @@ export function matchingSku(raw: WigConfig): WigProduct | undefined {
   });
 }
 
+/** True when two builds are the same wig (name ignored). */
+export function sameLook(a: WigConfig, b: WigConfig): boolean {
+  const x = normalizeConfig(a), y = normalizeConfig(b);
+  return x.lace === y.lace && x.grade === y.grade && x.part === y.part && x.texture === y.texture && x.length === y.length
+    && x.color === y.color && x.density === y.density && x.hairline === y.hairline
+    && x.extras.length === y.extras.length && x.extras.every((e) => y.extras.includes(e));
+}
+
+/** How a build differs from a listed wig, in customer words ("20\" → 24\""). */
+export function differencesFromSku(raw: WigConfig, product: WigProduct): string[] {
+  const c = normalizeConfig(raw);
+  const s = skuToConfig(product);
+  const out: string[] = [];
+  if (c.texture !== s.texture) out.push(`${findOption(TEXTURE_OPTIONS, s.texture).label} → ${findOption(TEXTURE_OPTIONS, c.texture).label}`);
+  if (c.length !== s.length) out.push(`${s.length}" → ${c.length}"`);
+  if (c.color !== s.color) out.push(`${colorOf(s.color).label} → ${colorOf(c.color).label}`);
+  if (c.lace !== s.lace) out.push(`${findOption(LACE_OPTIONS, s.lace).label} → ${findOption(LACE_OPTIONS, c.lace).label}`);
+  if (c.grade !== s.grade) out.push(`${s.grade} → ${c.grade}`);
+  if (c.density !== s.density) out.push(`${s.density}% → ${c.density}% density`);
+  if (c.hairline !== "natural") out.push(`+ ${findOption(HAIRLINE_OPTIONS, c.hairline).label} hairline`);
+  for (const id of c.extras) out.push(`+ ${findOption(EXTRA_OPTIONS, id).label}`);
+  return out;
+}
+
+/**
+ * The listed (photographed, in-stock) wig that looks most like this build.
+ * Texture matters most, then colour family, length, lace, grade, density.
+ * Hairline/extras are add-ons, so they don't change which wig is closest.
+ */
+export function nearestSku(raw: WigConfig): WigProduct {
+  const c = normalizeConfig(raw);
+  const colorFamily = (id: ColorId) => (id === "black" ? "black" : id === "highlight" || id === "ombre" || id === "honey" ? "light" : "other");
+  const score = (p: WigProduct) => {
+    const s = skuToConfig(p);
+    let d = 0;
+    if (s.texture !== c.texture) d += (s.texture === "bob") !== (c.texture === "bob") ? 60 : s.texture === "straight" || c.texture === "straight" ? 30 : 20;
+    if (s.color !== c.color) d += colorFamily(s.color) === colorFamily(c.color) ? 6 : 12;
+    d += Math.abs(s.length - c.length) * 1.5;
+    if (s.lace !== c.lace) d += 4;
+    if (s.grade !== c.grade) d += 3;
+    if (s.density !== c.density) d += 2;
+    return d;
+  };
+  return [...wigProducts].sort((a, b) => score(a) - score(b))[0];
+}
+
 /* ------------------------------ URL state ------------------------------ */
 
 const LACE_CODES: Record<LaceId, string> = { closure5x5: "c", frontal13x4: "f", glueless13x4: "g" };

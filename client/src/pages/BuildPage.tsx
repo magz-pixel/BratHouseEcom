@@ -6,9 +6,11 @@ import { BUSINESS, whatsappLink } from "@shared/business";
 import {
   CATEGORIES, COLOR_OPTIONS, DEFAULT_CONFIG, DENSITY_OPTIONS, EXTRA_OPTIONS, GRADE_OPTIONS, HAIRLINE_OPTIONS, LACE_OPTIONS, LENGTH_MAX, LENGTH_MIN, BOB_MAX,
   PART_OPTIONS, PRESETS, TEXTURE_OPTIONS, WIG_NAME_IDEAS, clampLength, colorOf, decodeConfig, encodeConfig, matchingSku, normalizeConfig, priceBreakdown,
-  randomConfig, shortSpec, specLines, type CategoryId, type ExtraId, type SkinId, type WigConfig,
+  randomConfig, sameLook, nearestSku, differencesFromSku, skuToConfig, shortSpec, specLines, type CategoryId, type ExtraId, type SkinId, type WigConfig,
 } from "@shared/wigBuilder";
 import { SiteShell } from "@/components/SiteShell";
+import { SkuArt, hasPhotos } from "@/components/LookArt";
+import type { WigProduct } from "@shared/catalog";
 import { Pedestal, SKINS, WigRender } from "@/components/WigRender";
 import { useStore } from "@/contexts/StoreContext";
 import { usePageMeta } from "@/hooks/usePageMeta";
@@ -73,7 +75,9 @@ export default function BuildPage() {
   const [config, setConfig] = useState<WigConfig>(() => decodeConfig(currentQuery()) ?? DEFAULT_CONFIG);
   const touched = useRef(false);
   const [tab, setTab] = useState<CategoryId>("lace");
-  const [visited, setVisited] = useState<Set<CategoryId>>(() => new Set(decodeConfig(currentQuery()) ? CATEGORIES.map((c) => c.id) : ["lace"]));
+  // Progress counts sections this visitor opened. (The look itself lives in the URL, so a reload or shared link
+  // keeps the wig but shouldn't claim every step was done.)
+  const [visited, setVisited] = useState<Set<CategoryId>>(() => new Set<CategoryId>(["lace"]));
   const [points, setPoints] = useState<number>(() => read(POINTS_KEY, 0));
   const claimsRef = useRef<string[]>(read(CLAIMS_KEY, []));
   const [muted, setMuted] = useState<boolean>(() => read(MUTE_KEY, false));
@@ -89,6 +93,8 @@ export default function BuildPage() {
   const [showBreakdown, setShowBreakdown] = useState(false);
   const sound = useSound(muted);
   const stageSvgRef = useRef<HTMLDivElement>(null);
+  const optionsRef = useRef<HTMLElement>(null);
+  const tabsRef = useRef<HTMLElement>(null);
 
   const cfg = useMemo(() => normalizeConfig(config), [config]);
   const price = useMemo(() => priceBreakdown(cfg), [cfg]);
@@ -148,6 +154,15 @@ export default function BuildPage() {
       return next;
     });
     award(`tab:${id}`, 10, `${CATEGORIES.find((c) => c.id === id)?.label} explored`);
+    // Phones: if the options panel is scrolled under the sticky preview/tabs, bring the new section's top into view.
+    window.requestAnimationFrame(() => {
+      const panel = optionsRef.current, tabs = tabsRef.current;
+      if (!panel || !tabs) return;
+      panel.scrollTop = 0; // desktop: the options column scrolls on its own
+      const gap = panel.getBoundingClientRect().top - tabs.getBoundingClientRect().bottom;
+      if (gap < 0) window.scrollBy({ top: gap - 8, behavior: window.matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth" });
+      tabs.querySelector<HTMLElement>('[aria-selected="true"]')?.scrollIntoView({ block: "nearest", inline: "center" });
+    });
   };
 
   useEffect(() => {
@@ -216,7 +231,7 @@ export default function BuildPage() {
           <div className="builder-presets" role="group" aria-label="Style presets">
             <span className="builder-presets__label">Presets</span>
             {PRESETS.map((p) => (
-              <button key={p.id} type="button" className={`preset-chip ${cfg.name === p.config.name ? "is-on" : ""}`} onClick={() => applyPreset(p.id)} title={p.vibe}>
+              <button key={p.id} type="button" className={`preset-chip ${sameLook(cfg, p.config) ? "is-on" : ""}`} aria-pressed={sameLook(cfg, p.config)} onClick={() => applyPreset(p.id)} title={p.vibe}>
                 <span className="preset-chip__dot" style={{ background: `linear-gradient(135deg, ${colorOf(p.config.color).swatch.light}, ${colorOf(p.config.color).swatch.dark})` }} />
                 {p.label}
               </button>
@@ -226,7 +241,7 @@ export default function BuildPage() {
 
         <div className="builder-main">
           {/* CATEGORY TABS */}
-          <nav className="builder-tabs" role="tablist" aria-label="Wig categories">
+          <nav ref={tabsRef} className="builder-tabs" role="tablist" aria-label="Wig categories">
             {CATEGORIES.map((c) => (
               <button key={c.id} role="tab" type="button" aria-selected={tab === c.id} className={`builder-tab ${tab === c.id ? "is-active" : ""} ${visited.has(c.id) ? "is-done" : ""}`} onClick={() => openTab(c.id)}>
                 <span className="builder-tab__icon" aria-hidden="true">{c.icon}</span>
@@ -272,12 +287,14 @@ export default function BuildPage() {
           </section>
 
           {/* OPTIONS */}
-          <section className="builder-options" role="tabpanel" aria-label={`${CATEGORIES.find((c) => c.id === tab)?.label} options`}>
+          <section ref={optionsRef} className="builder-options" role="tabpanel" aria-label={`${CATEGORIES.find((c) => c.id === tab)?.label} options`}>
             <div className="options-head">
               <h2>{CATEGORIES.find((c) => c.id === tab)?.label}</h2>
               <p>{CATEGORIES.find((c) => c.id === tab)?.hint}</p>
             </div>
             <OptionPanel tab={tab} config={cfg} update={update} points={points} />
+            <NextStep tab={tab} onNext={openTab} onReview={() => { setModal("summary"); sound.slay(); }} />
+            <ClosestWig config={cfg} exact={sku} onUse={(p) => { setConfig({ ...skuToConfig(p), name: cfg.name }); sound.slay(); react(); toast(`Switched to ${p.name}`, "chrome"); }} />
           </section>
         </div>
 
@@ -290,7 +307,7 @@ export default function BuildPage() {
         {/* BOTTOM BAR */}
         <footer className="builder-bar">
           <div className="builder-bar__progress">
-            <span>Your wig is <b>{progress}%</b> built{progress === 100 ? "! 💖" : ""}</span>
+            <span>Your wig is <b>{progress}%</b> built{progress === 100 ? "! 💖" : visited.size === CATEGORIES.length && !cfg.name.trim() ? " · name it to finish" : ""}</span>
             <div className="progress-track" role="progressbar" aria-valuenow={progress} aria-valuemin={0} aria-valuemax={100} aria-label="Build progress"><i style={{ width: `${progress}%` }} /></div>
           </div>
           <div className="builder-bar__price">
@@ -316,6 +333,42 @@ export default function BuildPage() {
         {modal === "save" && <SaveModal config={cfg} total={price.total} query={query} getSvg={svgMarkup} skin={skin} onClose={() => setModal(null)} />}
       </div>
     </SiteShell>
+  );
+}
+
+/* ----------------------------- guided flow ----------------------------- */
+
+function NextStep({ tab, onNext, onReview }: { tab: CategoryId; onNext: (id: CategoryId) => void; onReview: () => void }) {
+  const i = CATEGORIES.findIndex((c) => c.id === tab);
+  const next = CATEGORIES[i + 1];
+  return (
+    <div className="next-step">
+      <span className="next-step__count">Step {i + 1} of {CATEGORIES.length}</span>
+      {next
+        ? <button type="button" className="gloss-btn gloss-btn--chrome" onClick={() => onNext(next.id)}>Next: {next.label} <ArrowRight size={15} /></button>
+        : <button type="button" className="gloss-btn gloss-btn--pink" onClick={onReview}>Review &amp; order <ArrowRight size={15} /></button>}
+    </div>
+  );
+}
+
+/** The closest photographed, ready-to-ship wig: real photos for a custom build. */
+function ClosestWig({ config, exact, onUse }: { config: WigConfig; exact?: WigProduct; onUse: (p: WigProduct) => void }) {
+  const product = exact ?? nearestSku(config);
+  const diffs = exact ? [] : differencesFromSku(config, product);
+  const photos = hasPhotos(product);
+  return (
+    <aside className={`closest ${exact ? "closest--exact" : ""}`} aria-label="Closest ready-to-ship wig">
+      <Link href={`/product/${product.slug}`} className="closest__thumb" aria-label={`See ${product.name}`}><SkuArt product={product} sizes="96px" /></Link>
+      <div className="closest__body">
+        <p className="closest__kicker">{exact ? <><Package size={13} /> This exact wig is in stock</> : <>{photos ? "See it for real" : "Closest wig in stock"}</>}</p>
+        <p className="closest__name">{product.name} · <b>{formatMoney(product.price)}</b></p>
+        {diffs.length > 0 && <p className="closest__diff">Your changes: {diffs.slice(0, 4).join(" · ")}{diffs.length > 4 ? ` · +${diffs.length - 4} more` : ""}</p>}
+        <div className="closest__actions">
+          <Link href={`/product/${product.slug}`} className="text-link">{photos ? "See photos & 360°" : "View wig"} <ArrowRight size={13} /></Link>
+          {!exact && <button type="button" className="text-link" onClick={() => onUse(product)}>Start from this wig</button>}
+        </div>
+      </div>
+    </aside>
   );
 }
 
