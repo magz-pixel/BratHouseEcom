@@ -4,11 +4,10 @@ import { Link } from "wouter";
 import type { WigProduct } from "@shared/catalog";
 import { useStore, formatMoney } from "@/contexts/StoreContext";
 import { Sticker } from "@/components/StickerUI";
-import { SkuArt } from "@/components/LookArt";
+import { SkuArt, hasPhotos } from "@/components/LookArt";
 import { encodeConfig, skuToConfig } from "@shared/wigBuilder";
 import { pathWithQuery } from "@/lib/routing";
 
-const imageDisclosure = "Illustration · real photos of the sample drop coming soon.";
 
 export function WigCard({ product, index = 0 }: { product: WigProduct; index?: number }) {
   const { addItem, wishlist, toggleWishlist } = useStore();
@@ -26,7 +25,7 @@ export function WigCard({ product, index = 0 }: { product: WigProduct; index?: n
         <span className="product-grade-pill">{product.grade}</span>
       </div>
       <div className="product-card__copy">
-        <p className="ai-image-disclosure ai-image-disclosure--card">{imageDisclosure}</p>
+        {!hasPhotos(product) && <p className="ai-image-disclosure ai-image-disclosure--card">Illustration · real photos of the sample drop coming soon.</p>}
         <div className="product-card__meta"><span>{product.texture}</span><span>{product.length}&quot;</span></div>
         <Link href={`/product/${product.slug}`} className="product-card__name">{product.name}</Link>
         <Link href={pathWithQuery("/build", encodeConfig(skuToConfig(product)))} className="customise-link">✦ Customise this wig</Link>

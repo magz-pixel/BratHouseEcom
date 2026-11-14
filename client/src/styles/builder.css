@@ -566,3 +566,8 @@
   .builder-bar__actions .gloss-btn { padding: 0 12px; font-size: 13px; white-space: nowrap; }
   .builder-bar__actions .gloss-btn--chrome { padding: 0; width: 46px; justify-content: center; }
 }
+
+/* Real shoot photos (scripts/process-shoot.mjs) drop into the same slots as the drawn art. */
+.wig-photo { display: block; width: 100%; object-fit: cover; object-position: center 30%; background: #ece7e2; }
+.product-gallery__main > .wig-photo.product-detail-art { object-fit: contain; }
+.item-thumb .wig-photo { height: 100%; }

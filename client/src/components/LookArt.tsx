@@ -3,6 +3,7 @@ import { getWig, type WigProduct } from "@shared/catalog";
 import { PRESETS, skuToConfig, type WigConfig } from "@shared/wigBuilder";
 import { WigRender } from "@/components/WigRender";
 import type { CartItem } from "@/contexts/StoreContext";
+import { getWigMedia, heroShot, pickSrc, toSrcSet } from "@shared/wigMedia";
 
 /**
  * Drawn wig art used wherever a real photo is still missing.
@@ -13,7 +14,15 @@ export function LookArt({ preset, config, className = "", style, label, compact 
   return <div className={`wig-thumb ${className}`} style={style}><WigRender config={look} compact={compact} title={label || look.name || "BRATHOUSE wig illustration"} /></div>;
 }
 
-export function SkuArt({ product, className = "" }: { product: WigProduct; className?: string }) {
+/** True once real shoot photos exist for this wig (see scripts/process-shoot.mjs). */
+export const hasPhotos = (product: WigProduct) => Boolean(heroShot(getWigMedia(product.slug)));
+
+/** Real photo when the shoot has been processed, drawn illustration otherwise. */
+export function SkuArt({ product, className = "", sizes = "(max-width: 700px) 50vw, 360px", eager = false }: { product: WigProduct; className?: string; sizes?: string; eager?: boolean }) {
+  const shot = heroShot(getWigMedia(product.slug));
+  if (shot) {
+    return <img className={`wig-photo ${className}`} src={pickSrc(shot, 960)} srcSet={toSrcSet(shot)} sizes={sizes} width={shot.width} height={shot.height} alt={`${product.name} on a mannequin, front view`} loading={eager ? "eager" : "lazy"} decoding="async" />;
+  }
   return <LookArt config={skuToConfig(product)} className={className} label={`Illustration of ${product.name}`} />;
 }
 

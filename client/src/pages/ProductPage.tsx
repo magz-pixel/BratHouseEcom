@@ -7,11 +7,10 @@ import { SiteShell } from "@/components/SiteShell";
 import { BubbleButton, PageTag, SectionEyebrow, Tape } from "@/components/StickerUI";
 import { WigCard } from "@/components/ProductCards";
 import { usePageMeta } from "@/hooks/usePageMeta";
-import { SkuArt } from "@/components/LookArt";
+import { SkuArt, hasPhotos } from "@/components/LookArt";
 import { encodeConfig, skuToConfig } from "@shared/wigBuilder";
 import { pathWithQuery } from "@/lib/routing";
 
-const imageDisclosure = "Illustration · real photos of the sample drop coming soon.";
 
 export default function ProductPage() {
   const [, params] = useRoute("/product/:slug");
@@ -43,8 +42,8 @@ function ProductDetails({ product }: { product: (typeof wigProducts)[number] }) 
         <div className="product-gallery">
           <div className="product-gallery__main sticker-card">
             <Tape />
-            <SkuArt product={product} className="product-detail-art" />
-            <p className="ai-image-disclosure ai-image-disclosure--detail">{imageDisclosure}</p>
+            <SkuArt product={product} className="product-detail-art" sizes="(max-width: 900px) 100vw, 640px" eager />
+            {!hasPhotos(product) && <p className="ai-image-disclosure ai-image-disclosure--detail">Illustration · real photos of the sample drop coming soon.</p>}
           </div>
         </div>
         <div className="product-info">
