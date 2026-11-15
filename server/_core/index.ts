@@ -7,11 +7,14 @@ import { publicPlatformScript } from "./publicConfig";
 import { appRouter } from "../routers";
 import { createContext } from "./context";
 import { serveStatic, setupVite } from "./vite";
+import { registerTryOnRoutes } from "../tryOn";
 
 async function startServer() {
   const app = express();
   const server = createServer(app);
   // Configure body parser with larger size limit for file uploads
+  // Behind a proxy/CDN, set TRUST_PROXY=1 so per-visitor limits use the real client IP.
+  if (process.env.TRUST_PROXY) app.set("trust proxy", 1);
   app.use(express.json({ limit: "50mb" }));
   app.use(express.urlencoded({ limit: "50mb", extended: true }));
   app.get("/api/health", (_req, res) => res.json({ status: "ok" }));
@@ -19,6 +22,7 @@ async function startServer() {
     res.set("Cache-Control", "no-store").type("application/javascript").send(publicPlatformScript());
   });
   registerOAuthRoutes(app);
+  registerTryOnRoutes(app);
   // tRPC API
   app.use(
     "/api/trpc",

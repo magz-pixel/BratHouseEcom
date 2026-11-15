@@ -654,7 +654,7 @@
 
 /* ------------------------------ photo try-on ------------------------------ */
 .tool-chip--tryon { background: var(--b-pink, #ff1493); color: #fff; border-color: var(--b-ink, #0a0a0a); }
-.tryon { position: relative; height: clamp(420px, 62vh, 640px); border-radius: 28px; overflow: hidden; background: #1a1418; color: #fff; display: grid; grid-template-rows: minmax(0, 1fr) auto auto; }
+.tryon { position: relative; height: clamp(420px, 62vh, 640px); border-radius: 28px; overflow: hidden; background: #1a1418; color: #fff; display: grid; grid-template-rows: minmax(0, 1fr) auto auto auto; }
 .tryon--empty { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 10px; padding: 28px 20px; text-align: center; background: radial-gradient(ellipse at 50% 30%, #ffe1ef, #ffc2de 60%, #ffb08a); color: var(--b-ink, #0a0a0a); }
 .tryon--empty h3 { margin: 0; font: 400 32px/1 var(--bubble-font, inherit); }
 .tryon--empty h3 em { color: var(--b-pink, #ff1493); font-style: normal; }
@@ -693,3 +693,22 @@
 }
 .builder[data-tryon] .ship-badge { display: none; }
 @media (max-width: 900px) { .stage-tools .tool-chip--icon[aria-pressed] { display: none; } }
+
+/* ------------------------------ AI try-on ------------------------------ */
+.ai-cta { display: flex; align-items: center; justify-content: center; gap: 7px; margin: 0; padding: 10px 14px; border: 0; background: linear-gradient(90deg, #ff1493, #cc5500); color: #fff; font: 700 13px var(--body-font, inherit); cursor: pointer; }
+.ai-cta:disabled { background: #3a2d35; color: #cbb9c4; cursor: default; }
+.ai-tryon { position: absolute; inset: 0; z-index: 5; display: grid; place-items: center; padding: 16px; background: rgba(20, 12, 17, 0.92); overflow: auto; }
+.ai-tryon__close { position: absolute; top: 10px; right: 10px; }
+.ai-tryon__card { max-width: 380px; display: grid; justify-items: center; gap: 10px; text-align: center; }
+.ai-tryon__card h3 { margin: 0; font: 400 28px/1 var(--bubble-font, inherit); }
+.ai-tryon__card h3 em { color: #ff8cc6; font-style: normal; font-size: 0.7em; }
+.ai-tryon__card p { margin: 0; font-size: 14px; color: #eadde4; }
+.ai-tryon__card ul { margin: 0; padding: 0 0 0 18px; text-align: left; font-size: 13px; color: #eadde4; display: grid; gap: 4px; }
+.ai-tryon__consent { display: flex; gap: 8px; align-items: flex-start; text-align: left; font-size: 13px; cursor: pointer; }
+.ai-tryon__consent input { margin-top: 3px; accent-color: #ff1493; width: 18px; height: 18px; flex: none; }
+.ai-tryon__card .gloss-btn:disabled { opacity: 0.45; cursor: not-allowed; }
+.ai-tryon__fine { display: inline-flex; align-items: center; gap: 5px; margin: 0; font-size: 11px !important; color: #bfaab6 !important; }
+.ai-tryon__result { position: absolute; inset: 54px 12px 12px; display: grid; grid-template-rows: minmax(0, 1fr) auto auto; gap: 8px; justify-items: center; }
+.ai-tryon__result img { width: 100%; height: 100%; min-height: 0; object-fit: contain; border-radius: 14px; }
+.ai-tryon__label { position: absolute; top: -42px; left: 0; padding: 4px 10px; border-radius: 999px; background: rgba(10, 10, 10, 0.75); font: 700 10px var(--mono-font, monospace); text-transform: uppercase; letter-spacing: 0.06em; }
+.ai-tryon__actions { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; }

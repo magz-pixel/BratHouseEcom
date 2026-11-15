@@ -1,7 +1,8 @@
 import { useCallback, useEffect, useLayoutEffect, useRef, useState, type PointerEvent as ReactPointerEvent } from "react";
-import { Camera, Download, Eye, ImagePlus, Loader2, RefreshCw, ScanFace, ShieldCheck, X } from "lucide-react";
+import { Camera, Download, Sparkles, Eye, ImagePlus, Loader2, RefreshCw, ScanFace, ShieldCheck, X } from "lucide-react";
 import type { WigConfig } from "@shared/wigBuilder";
 import { WigRender, HEAD } from "@/components/WigRender";
+import { AiTryOnFlow, useAiTryOnStatus } from "@/components/AiTryOn";
 import { detectFace, fileToCanvas, warmUpFaceDetector } from "@/lib/faceDetect";
 
 /** Eye positions in the drawn head (SVG units): used to line the wig up on a real face. */
@@ -24,6 +25,8 @@ export function TryOn({ config, onClose }: { config: WigConfig; onClose: () => v
   const [auto, setAuto] = useState<Placement | null>(null);
   const [status, setStatus] = useState<Status>("idle");
   const [peek, setPeek] = useState(false);
+  const [ai, setAi] = useState(false);
+  const [aiStatus, refreshAi] = useAiTryOnStatus();
   const outerRef = useRef<HTMLDivElement>(null);
   const [box, setBox] = useState({ w: 0, h: 0 });
   const pointers = useRef(new Map<number, { x: number; y: number }>());
@@ -222,6 +225,10 @@ export function TryOn({ config, onClose }: { config: WigConfig; onClose: () => v
           <button type="button" className="tool-chip" onClick={() => void save()} aria-label="Save this try-on as an image"><Download size={14} /> Save</button>
         </div>
       </div>
+      <button type="button" className="ai-cta" disabled={!aiStatus?.enabled || aiStatus.remaining <= 0} onClick={() => setAi(true)}>
+        <Sparkles size={15} /> {aiStatus?.enabled ? (aiStatus.remaining > 0 ? `See it on me (AI) · ${aiStatus.remaining} free today` : "AI previews used up for today") : "Realistic AI preview · coming soon"}
+      </button>
+      {ai && <AiTryOnFlow photoUrl={photo.url} config={config} onClose={() => setAi(false)} onUsed={refreshAi} />}
       <p className="tryon__note">Drawn preview of your build. Real-hair try-on comes after the photo shoot.</p>
     </div>
   );

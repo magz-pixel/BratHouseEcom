@@ -1,1 +1,33 @@
-{"version":"0.0.1","configurations":[{"name":"brathouse-static","runtimeExecutable":"npx","runtimeArgs":["pnpm@10.18.0","exec","vite","--port","5173","--strictPort"],"port":5173}]}
+{
+ "version": "0.0.1",
+ "configurations": [
+  {
+   "name": "brathouse-static",
+   "runtimeExecutable": "npx",
+   "runtimeArgs": [
+    "pnpm@10.18.0",
+    "exec",
+    "vite",
+    "--port",
+    "5173",
+    "--strictPort"
+   ],
+   "port": 5173
+  },
+  {
+   "name": "brathouse-server",
+   "runtimeExecutable": "node",
+   "runtimeArgs": [
+    "node_modules/tsx/dist/cli.mjs",
+    "server/_core/index.ts"
+   ],
+   "port": 3100,
+   "env": {
+    "NODE_ENV": "development",
+    "PORT": "3100",
+    "TRYON_PROVIDER": "mock",
+    "TRYON_DAILY_LIMIT": "2"
+   }
+  }
+ ]
+}
